@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Expression Evaluator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        p.example {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #555;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #007bff;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 12px 20px;
+            width: 100%;
+            font-size: 18px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 20px;
+            color: #333;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+
+        @media (max-width: 390px) {
+            .container {
+                padding: 15px 10px;
+                border-radius: 10px;
+            }
+
+            h1 {
+                font-size: 20px;
+                margin-bottom: 8px;
+            }
+
+            p.example {
+                font-size: 14px;
+                padding: 8px;
+                margin-bottom: 15px;
+            }
+
+            input[type="text"],
+            button {
+                font-size: 16px;
+                padding: 10px;
+            }
+
+            .result {
+                font-size: 16px;
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Math Expression Evaluator</h1>
+        <p class="example"><strong>Example:</strong> <code>(2 + 3) * 4 / 2 - 5</code></p>
+        <input type="text" id="expression" placeholder="Enter your equation...">
+        <button onclick="handleEvaluation()">Evaluate</button>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        function handleEvaluation() {
+            const expression = document.getElementById("expression").value.trim();
+            const resultElement = document.getElementById("result");
+
+            if (!expression) {
+                resultElement.innerHTML = `<strong>Error:</strong> Please enter an expression!`;
+                resultElement.classList.add("error");
+                return;
+            }
+
+            try {
+                const result = evaluateExpression(expression);
+                resultElement.innerHTML = `<strong>Result:</strong> ${result}`;
+                resultElement.classList.remove("error");
+            } catch (error) {
+                resultElement.innerHTML = `<strong>Error:</strong> ${error.message}`;
+                resultElement.classList.add("error");
+            }
+        }
+
+        function evaluateExpression(expression) {
+            const tokens = expression.match(/(\d+|\+|\-|\*|\/|\(|\))/g);
+            if (!tokens) throw new Error("Invalid expression");
+
+            return parseTokens(tokens);
+        }
+
+        function parseTokens(tokens) {
+            const operators = [];
+            const values = [];
+            const precedence = { '+': 1, '-': 1, '*': 2, '/': 2 };
+
+            const applyOperator = () => {
+                const operator = operators.pop();
+                const b = values.pop();
+                const a = values.pop();
+                switch (operator) {
+                    case '+': values.push(a + b); break;
+                    case '-': values.push(a - b); break;
+                    case '*': values.push(a * b); break;
+                    case '/':
+                        if (b === 0) throw new Error("Division by zero");
+                        values.push(a / b);
+                        break;
+                }
+            };
+
+            for (const token of tokens) {
+                if (!isNaN(token)) {
+                    values.push(Number(token));
+                } else if (token === '(') {
+                    operators.push(token);
+                } else if (token === ')') {
+                    while (operators.length && operators[operators.length - 1] !== '(') {
+                        applyOperator();
+                    }
+                    operators.pop();
+                } else if (['+', '-', '*', '/'].includes(token)) {
+                    while (operators.length && precedence[operators[operators.length - 1]] >= precedence[token]) {
+                        applyOperator();
+                    }
+                    operators.push(token);
+                }
+            }
+
+            while (operators.length) {
+                applyOperator();
+            }
+
+            return values.pop();
+        }
+    </script>
+</body>
+</html>
